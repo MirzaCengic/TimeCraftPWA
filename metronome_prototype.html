@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Section Metronome</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .main-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .panel h2 {
+            margin-bottom: 20px;
+            color: #fff;
+            font-size: 1.5rem;
+        }
+
+        .section-builder {
+            display: grid;
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group label {
+            min-width: 80px;
+            font-weight: 500;
+        }
+
+        input, select, button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input, select {
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            flex: 1;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .section-list {
+            display: grid;
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .section-item {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #d32f2f;
+        }
+
+        .arrangement {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+            min-height: 60px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 15px;
+            border: 2px dashed rgba(255,255,255,0.3);
+        }
+
+        .arrangement-item {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .arrangement-item:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .arrangement-item.current {
+            background: #ff9800;
+            box-shadow: 0 0 20px rgba(255, 152, 0, 0.5);
+        }
+
+        .playback-panel {
+            grid-column: 1 / -1;
+            text-align: center;
+        }
+
+        .transport-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .transport-controls button {
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+        }
+
+        .play-btn {
+            background: #4CAF50;
+        }
+
+        .status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .status-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .status-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .metronome-flash {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            margin: 0 auto 20px;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+
+        .metronome-flash.normal {
+            width: 50px;
+            height: 50px;
+        }
+
+        .metronome-flash.large {
+            width: 100px;
+            height: 100px;
+        }
+
+        .metronome-flash.full {
+            width: 200px;
+            height: 200px;
+        }
+
+        .metronome-flash.beat {
+            background: #ffff00;
+            box-shadow: 0 0 30px rgba(255, 255, 0, 0.8);
+        }
+
+        /* Breathing animation for relaxed feel */
+        .metronome-flash.breathing {
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            50% { 
+                transform: scale(1.1);
+                opacity: 0.9;
+            }
+        }
+
+        /* Faster breathing for high tempos to stay relaxed */
+        .metronome-flash.breathing.fast-tempo {
+            animation: breathe-fast 2s ease-in-out infinite;
+        }
+
+        @keyframes breathe-fast {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            50% { 
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .status {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Section Metronome</h1>
+            <p>Program sections, build arrangements, practice with structure</p>
+        </div>
+
+        <div class="main-controls">
+            <div class="panel">
+                <h2>Section Builder</h2>
+                <div class="section-builder">
+                    <div class="input-group">
+                        <label>Name:</label>
+                        <input type="text" id="sectionName" placeholder="A" maxlength="8">
+                    </div>
+                    <div class="input-group">
+                        <label>Tempo:</label>
+                        <input type="number" id="sectionTempo" value="120" min="40" max="220">
+                        <span>BPM</span>
+                    </div>
+                    <div class="input-group">
+                        <label>Bars:</label>
+                        <input type="number" id="sectionBars" value="4" min="1" max="32">
+                    </div>
+                    <div class="input-group">
+                        <label>Time:</label>
+                        <input type="number" id="sectionTimeNumerator" value="4" min="1" max="32" style="width: 60px;">
+                        <span>/</span>
+                        <select id="sectionTimeDenominator" style="width: 60px;">
+                            <option value="4" selected>4</option>
+                            <option value="8">8</option>
+                            <option value="16">16</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Sound:</label>
+                        <select id="sectionSound">
+                            <option value="classic">Classic (Square)</option>
+                            <option value="soft">Soft (Sine)</option>
+                            <option value="sharp">Sharp (Sawtooth)</option>
+                            <option value="deep">Deep (Triangle)</option>
+                            <option value="silent">Silent (Gap Click)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label style="min-width: auto;">
+                            <input type="checkbox" id="accentSectionStart"> Accent section start
+                        </label>
+                    </div>
+                    <div class="input-group">
+                        <label style="min-width: auto;">
+                            <input type="checkbox" id="swingFeel"> Swing feel (shuffle)
+                        </label>
+                    </div>
+                    <div class="input-group">
+                        <label>Subdivision:</label>
+                        <select id="sectionSubdivision">
+                            <option value="1">Quarter Notes (1)</option>
+                            <option value="2">8th Notes (2)</option>
+                            <option value="3">Triplets (3)</option>
+                            <option value="4">16th Notes (4)</option>
+                            <option value="5">Quintuplets (5)</option>
+                            <option value="6">16th Triplets (6)</option>
+                            <option value="7">Septuplets (7)</option>
+                            <option value="8">32nd Notes (8)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Sub Volume:</label>
+                        <input type="range" id="subdivisionVolume" min="0" max="100" value="30">
+                        <span id="subdivisionVolumeDisplay">30%</span>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="addSection()" style="flex: 1;">Add Section</button>
+                        <button onclick="clearSectionForm()" style="background: #666;">Cancel</button>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button onclick="deleteAllSections()" style="background: #f44336; width: 100%;">Delete All Sections</button>
+                    </div>
+                </div>
+
+                <div class="section-list" id="sectionList">
+                    <!-- Sections will be added here -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Arrangement Builder</h2>
+                <p style="margin-bottom: 15px; opacity: 0.8;">Click sections to add to arrangement:</p>
+                
+                <div id="availableSections" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                    <!-- Available sections will appear here -->
+                </div>
+
+                <div class="arrangement" id="arrangement">
+                    <!-- Arrangement will be built here -->
+                </div>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                    <button onclick="clearArrangement()" style="background: #f44336;">Clear Arrangement</button>
+                    <button onclick="loadPreset('verse-chorus')">Verse-Chorus</button>
+                    <button onclick="loadPreset('drum-groove')">Drum Groove</button>
+                    <button onclick="loadPreset('fill-practice')">Fill Practice</button>
+                    <button onclick="loadPreset('tempo-build')">Tempo Build</button>
+                    <button onclick="loadPreset('limb-independence')">Limb Independence</button>
+                    <button onclick="loadPreset('gap-click')">Gap Click</button>
+                    <button onclick="loadPreset('gap-click-short')">Gap Click Short</button>
+                    <button onclick="loadPreset('swing-practice')">Swing Practice</button>
+                </div>
+                
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px;">
+                    <button onclick="saveArrangement()" style="background: #4CAF50;">💾 Save</button>
+                    <button onclick="loadArrangement()" style="background: #2196F3;">📁 Load</button>
+                    <button onclick="exportArrangement()" style="background: #FF9800;">📤 Export</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importArrangement(event)">
+                    <button onclick="document.getElementById('importFile').click()" style="background: #9C27B0;">📥 Import</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel playback-panel">
+            <h2>Playback Control</h2>
+            
+            <div class="metronome-flash" id="metronomeFlash"></div>
+            
+            <div class="transport-controls">
+                <button class="play-btn" onclick="togglePlayback()" id="playButton">▶ PLAY</button>
+                <button onclick="tapTempo()" id="tapButton" style="background: #9C27B0;">🎯 TAP TEMPO</button>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 30px; margin: 20px 0; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: 600;">Main Volume:</label>
+                    <input type="range" id="globalMainVolume" min="0" max="100" value="70" style="width: 120px;">
+                    <span id="globalMainVolumeDisplay" style="min-width: 35px; font-weight: 600;">70%</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: 600;">Sub Volume:</label>
+                    <input type="range" id="globalSubVolume" min="0" max="100" value="30" style="width: 120px;">
+                    <span id="globalSubVolumeDisplay" style="min-width: 35px; font-weight: 600;">30%</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: 600;">Visual Size:</label>
+                    <select id="visualSize" style="width: 80px;">
+                        <option value="normal">Normal</option>
+                        <option value="large">Large</option>
+                        <option value="full">Full</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: 600;">Count-in:</label>
+                    <select id="countInBars" style="width: 80px;">
+                        <option value="0" selected>Off</option>
+                        <option value="1">1 Bar</option>
+                        <option value="2">2 Bars</option>
+                        <option value="3">3 Bars</option>
+                        <option value="4">4 Bars</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="status">
+                <div class="status-item">
+                    <div class="status-value" id="currentSection">--</div>
+                    <div>Current Section</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="currentTempo">--</div>
+                    <div>BPM</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="currentBar">--</div>
+                    <div>Bar</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="currentBeat">--</div>
+                    <div>Beat</div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.08); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 13px; opacity: 0.9; margin-bottom: 6px; font-weight: 500;">Upcoming Section</div>
+                <div id="upcomingSection" style="font-size: 14px; font-weight: 600; line-height: 1.3; word-break: break-word;">--</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let sections = {};
+        let arrangement = [];
+        let isPlaying = false;
+        let audioContext;
+        let currentArrangementIndex = 0;
+        let currentBar = 1;
+        let currentBeat = 1;
+        // Track what's actually playing now (for display) vs what's being scheduled next
+        let playingArrangementIndex = 0;
+        let playingBar = 1;
+        let playingBeat = 1;
+        let nextBeatTime = 0;
+        let schedulerTimer;
+        let lookahead = 25.0; // milliseconds
+        let scheduleAheadTime = 0.1; // seconds
+        let globalMainVolume = 70; // Global main volume percentage
+        let globalSubVolume = 30; // Global subdivision volume percentage
+        let editingSection = null; // Track which section is being edited
+        let visualSize = 'normal'; // Visual metronome size
+        let tapTimes = []; // Store tap timestamps for tempo calculation
+        let tapTimeout = null; // Reset taps after inactivity
+        let countInBars = 0; // Number of count-in bars
+        let isCountingIn = false; // Track if we're in count-in phase
+        let countInBar = 1; // Current count-in bar
+        let countInBeat = 1; // Current count-in beat
+
+        // Simple delete function - exposed globally
+        window.deleteSectionByName = function(sectionName) {
+            console.log('Attempting to delete:', sectionName);
+            if (confirm(`Delete section "${sectionName}"?`)) {
+                console.log('User confirmed deletion');
+                delete sections[sectionName];
+                // Remove from arrangement
+                arrangement = arrangement.filter(section => section !== sectionName);
+                console.log('Updated sections:', Object.keys(sections));
+                updateSectionDisplay();
+                updateAvailableSections();
+                updateArrangementDisplay();
+                autoSave(); // Auto-save after deleting section
+            }
+        };
+
+        // Delete all sections function
+        function deleteAllSections() {
+            const sectionCount = Object.keys(sections).length;
+            if (sectionCount === 0) {
+                alert('No sections to delete.');
+                return;
+            }
+            
+            if (confirm(`Delete all ${sectionCount} sections? This will also clear the arrangement.`)) {
+                sections = {};
+                arrangement = [];
+                currentArrangementIndex = 0;
+                
+                updateSectionDisplay();
+                updateAvailableSections();
+                updateArrangementDisplay();
+                updateStatus();
+                autoSave(); // Auto-save after deleting all sections
+                
+                alert('All sections deleted successfully.');
+            }
+        }
+
+        // Edit section function - exposed globally
+        window.editSectionByName = function(sectionName) {
+            const section = sections[sectionName];
+            if (!section) return;
+
+            editingSection = sectionName;
+            
+            // Populate form with current values
+            document.getElementById('sectionName').value = sectionName;
+            document.getElementById('sectionTempo').value = section.tempo;
+            document.getElementById('sectionBars').value = section.bars;
+            
+            const [numerator, denominator] = section.timeSignature.split('/');
+            document.getElementById('sectionTimeNumerator').value = numerator;
+            document.getElementById('sectionTimeDenominator').value = denominator;
+            
+            document.getElementById('sectionSubdivision').value = section.subdivision || 1;
+            document.getElementById('subdivisionVolume').value = section.subdivisionVolume || 30;
+            document.getElementById('subdivisionVolumeDisplay').textContent = (section.subdivisionVolume || 30) + '%';
+            document.getElementById('sectionSound').value = section.sound || 'classic';
+            document.getElementById('accentSectionStart').checked = section.accentSectionStart || false;
+            document.getElementById('swingFeel').checked = section.swingFeel || false;
+            
+            // Update button text
+            document.querySelector('button[onclick="addSection()"]').textContent = 'Update Section';
+            
+            // Scroll to section builder
+            document.querySelector('.section-builder').scrollIntoView({ behavior: 'smooth' });
+        };
+
+        // Initialize audio context on first user interaction
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        // Get sound settings based on sound type
+        function getSoundSettings(soundType, isAccent, isSubdivision, isSectionStart) {
+            const settings = {
+                classic: {
+                    waveform: 'square',
+                    frequencies: { accent: 1000, beat: 800, subdivision: 600, sectionStart: 1200 }
+                },
+                soft: {
+                    waveform: 'sine', 
+                    frequencies: { accent: 880, beat: 660, subdivision: 440, sectionStart: 1100 }
+                },
+                sharp: {
+                    waveform: 'sawtooth',
+                    frequencies: { accent: 1200, beat: 900, subdivision: 700, sectionStart: 1400 }
+                },
+                deep: {
+                    waveform: 'triangle',
+                    frequencies: { accent: 400, beat: 300, subdivision: 200, sectionStart: 500 }
+                }
+            };
+
+            const soundConfig = settings[soundType] || settings.classic;
+            
+            let frequency;
+            if (isSectionStart) {
+                frequency = soundConfig.frequencies.sectionStart;
+            } else if (isAccent) {
+                frequency = soundConfig.frequencies.accent;
+            } else if (isSubdivision) {
+                frequency = soundConfig.frequencies.subdivision;
+            } else {
+                frequency = soundConfig.frequencies.beat;
+            }
+
+            return {
+                waveform: soundConfig.waveform,
+                frequency: frequency
+            };
+        }
+
+        // Create a click sound with different tones for subdivisions
+        function playClick(time, accent = false, subdivision = false, soundType = 'classic', isSectionStart = false) {
+            if (!audioContext) return;
+            
+            // Silent sections: provide visual feedback only, no audio
+            if (soundType === 'silent') {
+                // Visual feedback - flash for main beats and section starts in silent mode
+                if (Math.abs(time - audioContext.currentTime) < 0.1) {
+                    const flash = document.getElementById('metronomeFlash');
+                    if (!subdivision) {
+                        flash.classList.add('beat');
+                        // Use different flash duration for silent mode to indicate it's silent
+                        flash.style.backgroundColor = '#ff6b6b'; // Different color for silent
+                        setTimeout(() => {
+                            flash.classList.remove('beat');
+                            flash.style.backgroundColor = ''; // Reset color
+                        }, isSectionStart ? 200 : 100);
+                    }
+                }
+                return; // No audio output for silent sections
+            }
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Get sound settings
+            const soundSettings = getSoundSettings(soundType, accent, subdivision, isSectionStart);
+            oscillator.frequency.value = soundSettings.frequency;
+            oscillator.type = soundSettings.waveform;
+            
+            // Volume based on click type - use global volumes
+            let volume = 0.1;
+            if (subdivision) {
+                volume = 0.1 * (globalSubVolume / 100);
+            } else if (isSectionStart) {
+                volume = 0.15 * (globalMainVolume / 100); // Section start uses main volume
+            } else {
+                volume = 0.1 * (globalMainVolume / 100); // Regular beats use main volume
+            }
+            
+            // Duration based on sound type and click type
+            let duration = isSectionStart ? 0.15 : (subdivision ? 0.04 : 0.08);
+            
+            gainNode.gain.setValueAtTime(volume, time);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, time + duration);
+            
+            oscillator.start(time);
+            oscillator.stop(time + duration);
+
+            // Visual feedback - flash brighter for main beats and section starts
+            if (Math.abs(time - audioContext.currentTime) < 0.1) {
+                const flash = document.getElementById('metronomeFlash');
+                if (!subdivision) {
+                    flash.classList.add('beat');
+                    setTimeout(() => flash.classList.remove('beat'), isSectionStart ? 200 : 100);
+                }
+            }
+        }
+
+        // Create count-in click sound (higher pitch and shorter than regular clicks)
+        function playCountInClick(time, accent = false) {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Count-in uses a higher pitched sine wave for distinction
+            oscillator.frequency.value = accent ? 1400 : 1200; // Higher than regular accent tones
+            oscillator.type = 'sine';
+            
+            // Volume - slightly quieter than main beats
+            let volume = 0.08 * (globalMainVolume / 100);
+            if (accent) volume *= 1.3; // Accent is slightly louder
+            
+            // Shorter duration for count-in
+            let duration = 0.06;
+            
+            gainNode.gain.setValueAtTime(volume, time);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, time + duration);
+            
+            oscillator.start(time);
+            oscillator.stop(time + duration);
+
+            // Visual feedback for count-in
+            if (Math.abs(time - audioContext.currentTime) < 0.1) {
+                const flash = document.getElementById('metronomeFlash');
+                flash.classList.add('beat');
+                // Use orange color for count-in
+                flash.style.backgroundColor = '#ff9800';
+                setTimeout(() => {
+                    flash.classList.remove('beat');
+                    flash.style.backgroundColor = '';
+                }, 100);
+            }
+        }
+
+        // Parse time signature
+        function parseTimeSignature(timeSig) {
+            const [numerator, denominator] = timeSig.split('/').map(Number);
+            return { numerator, denominator };
+        }
+
+        // Calculate beat duration based on tempo and time signature
+        function getBeatDuration(tempo, timeSig) {
+            const { denominator } = parseTimeSignature(timeSig);
+            return 60.0 / tempo * (4 / denominator);
+        }
+
+        // Schedule the next beat with subdivisions
+        function scheduler() {
+            if (!isPlaying || arrangement.length === 0) return;
+
+            while (nextBeatTime < audioContext.currentTime + scheduleAheadTime) {
+                // Handle count-in phase
+                if (isCountingIn) {
+                    // Use first section's tempo and time signature for count-in
+                    const firstSectionName = arrangement[0];
+                    const firstSectionData = sections[firstSectionName];
+                    
+                    if (!firstSectionData) {
+                        stopPlayback();
+                        return;
+                    }
+                    
+                    const timeSig = parseTimeSignature(firstSectionData.timeSignature);
+                    const baseBeatDuration = getBeatDuration(firstSectionData.tempo, firstSectionData.timeSignature);
+                    
+                    // Schedule count-in click
+                    const isAccent = countInBeat === 1; // Accent on beat 1 of each count-in bar
+                    playCountInClick(nextBeatTime, isAccent);
+                    
+                    // Move to next beat
+                    nextBeatTime += baseBeatDuration;
+                    countInBeat++;
+                    
+                    if (countInBeat > timeSig.numerator) {
+                        countInBeat = 1;
+                        countInBar++;
+                        
+                        if (countInBar > countInBars) {
+                            // Count-in complete, start main arrangement
+                            isCountingIn = false;
+                            currentArrangementIndex = 0;
+                            currentBar = 1;
+                            currentBeat = 1;
+                            updateArrangementDisplay();
+                        }
+                    }
+                    
+                    updateStatus();
+                    continue; // Skip regular scheduling logic during count-in
+                }
+
+                const currentSectionName = arrangement[currentArrangementIndex];
+                const currentSectionData = sections[currentSectionName];
+                
+                if (!currentSectionData) {
+                    stopPlayback();
+                    return;
+                }
+
+                const timeSig = parseTimeSignature(currentSectionData.timeSignature);
+                const subdivision = currentSectionData.subdivision || 1;
+                const soundType = currentSectionData.sound || 'classic';
+                const accentSectionStart = currentSectionData.accentSectionStart || false;
+                const swingFeel = currentSectionData.swingFeel || false;
+                
+                // Calculate subdivision timing
+                const baseBeatDuration = getBeatDuration(currentSectionData.tempo, currentSectionData.timeSignature);
+                
+                // Check if this is the very first beat of a new section
+                const isSectionStart = accentSectionStart && currentBar === 1 && currentBeat === 1;
+                
+                // Update "currently playing" variables when beat is about to play
+                if (Math.abs(nextBeatTime - audioContext.currentTime) < 0.1) {
+                    playingArrangementIndex = currentArrangementIndex;
+                    playingBar = currentBar;
+                    playingBeat = currentBeat;
+                    // Update status and arrangement display when playing variables change
+                    updateStatus();
+                    updateArrangementDisplay();
+                }
+
+                // Schedule main beat (always plays)
+                const isMainBeatAccent = currentBeat === 1 && !isSectionStart; // Don't double-accent
+                playClick(nextBeatTime, isMainBeatAccent, false, soundType, isSectionStart);
+                
+                // Schedule subdivision clicks (if subdivision > 1 OR swing with quarters)
+                if (subdivision > 1 || (swingFeel && subdivision === 1)) {
+                    if (swingFeel) {
+                        // Swing timing: use triplet feel
+                        // Play on 1st and 3rd of triplet (long-short pattern)
+                        const tripletDuration = baseBeatDuration / 3;
+                        
+                        if (subdivision === 1) {
+                            // Swing quarters: add swing 8th notes
+                            const secondNoteTime = nextBeatTime + (tripletDuration * 2);
+                            playClick(secondNoteTime, false, true, soundType, false);
+                        } else {
+                            // For subdivision > 1, apply swing to pairs
+                            const swingSubdivisions = Math.floor(subdivision / 2);
+                            for (let swingPair = 0; swingPair < swingSubdivisions; swingPair++) {
+                                // First note of swing pair (long note - on triplet beat 1)
+                                const firstNoteTime = nextBeatTime + (baseBeatDuration * 2 * swingPair / subdivision);
+                                playClick(firstNoteTime, false, true, soundType, false);
+                                
+                                // Second note of swing pair (short note - on triplet beat 3)
+                                const secondNoteTime = firstNoteTime + (tripletDuration * 2);
+                                playClick(secondNoteTime, false, true, soundType, false);
+                            }
+                            
+                            // Handle odd subdivisions (play remaining straight)
+                            if (subdivision % 2 === 1 && subdivision > 2) {
+                                const lastSubdivisionTime = nextBeatTime + (baseBeatDuration * (subdivision - 1) / subdivision);
+                                playClick(lastSubdivisionTime, false, true, soundType, false);
+                            }
+                        }
+                    } else {
+                        // Regular straight timing
+                        const subdivisionDuration = baseBeatDuration / subdivision;
+                        for (let sub = 1; sub < subdivision; sub++) {
+                            const subdivisionTime = nextBeatTime + (subdivisionDuration * sub);
+                            playClick(subdivisionTime, false, true, soundType, false);
+                        }
+                    }
+                }
+                
+                // Move to next beat
+                nextBeatTime += baseBeatDuration;
+                
+                // Advance beat/bar/section
+                currentBeat++;
+                if (currentBeat > timeSig.numerator) {
+                    currentBeat = 1;
+                    currentBar++;
+                    
+                    if (currentBar > currentSectionData.bars) {
+                        currentBar = 1;
+                        currentArrangementIndex++;
+                        
+                        if (currentArrangementIndex >= arrangement.length) {
+                            currentArrangementIndex = 0; // Loop arrangement
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update status display
+        function updateStatus() {
+            if (arrangement.length === 0) {
+                document.getElementById('currentTempo').textContent = '--';
+                document.getElementById('currentSection').textContent = '--';
+                document.getElementById('currentBar').textContent = '--';
+                document.getElementById('currentBeat').textContent = '--';
+                document.getElementById('upcomingSection').textContent = '--';
+                return;
+            }
+
+            if (isCountingIn) {
+                // Show count-in status
+                const firstSectionName = arrangement[0];
+                const firstSectionData = sections[firstSectionName];
+                
+                if (firstSectionData) {
+                    document.getElementById('currentTempo').textContent = firstSectionData.tempo;
+                    document.getElementById('currentSection').textContent = 'COUNT-IN';
+                    document.getElementById('currentBar').textContent = `${countInBar}/${countInBars}`;
+                    document.getElementById('currentBeat').textContent = countInBeat;
+                    
+                    // Show detailed upcoming section info during count-in
+                    const subdivisionText = getSubdivisionText(firstSectionData.subdivision || 1);
+                    document.getElementById('upcomingSection').textContent = `${firstSectionName} - ${firstSectionData.tempo}BPM - ${firstSectionData.timeSignature} - ${subdivisionText}`;
+                }
+            } else {
+                // Show currently playing status (not what's being scheduled)
+                const playingSectionName = arrangement[playingArrangementIndex];
+                const playingSectionData = sections[playingSectionName];
+                
+                if (playingSectionData) {
+                    document.getElementById('currentTempo').textContent = playingSectionData.tempo;
+                    document.getElementById('currentSection').textContent = playingSectionName;
+                    document.getElementById('currentBar').textContent = `${playingBar}/${playingSectionData.bars}`;
+                    document.getElementById('currentBeat').textContent = playingBeat;
+                    
+                    // Calculate and show upcoming section
+                    const upcomingSectionName = getUpcomingSection();
+                    document.getElementById('upcomingSection').textContent = upcomingSectionName || '--';
+                }
+            }
+        }
+
+        // Calculate what section is coming next
+        function getUpcomingSection() {
+            if (!isPlaying || arrangement.length === 0) return null;
+            
+            // Always show the next section in the arrangement (what comes after current section)
+            let nextIndex = currentArrangementIndex + 1;
+            if (nextIndex >= arrangement.length) {
+                nextIndex = 0; // Loop back to beginning
+            }
+            
+            const upcomingSectionName = arrangement[nextIndex];
+            
+            // Get section details
+            const upcomingSectionData = sections[upcomingSectionName];
+            if (!upcomingSectionData) return upcomingSectionName;
+            
+            const subdivisionText = getSubdivisionText(upcomingSectionData.subdivision || 1);
+            return `${upcomingSectionName} - ${upcomingSectionData.tempo}BPM - ${upcomingSectionData.timeSignature} - ${subdivisionText}`;
+        }
+
+        // Add or update section
+        function addSection() {
+            const name = document.getElementById('sectionName').value.trim();
+            const tempo = parseInt(document.getElementById('sectionTempo').value);
+            const bars = parseInt(document.getElementById('sectionBars').value);
+            const timeNumerator = parseInt(document.getElementById('sectionTimeNumerator').value);
+            const timeDenominator = parseInt(document.getElementById('sectionTimeDenominator').value);
+            const timeSignature = `${timeNumerator}/${timeDenominator}`;
+            const subdivision = parseInt(document.getElementById('sectionSubdivision').value);
+            const subdivisionVolume = parseInt(document.getElementById('subdivisionVolume').value);
+            const sound = document.getElementById('sectionSound').value;
+            const accentSectionStart = document.getElementById('accentSectionStart').checked;
+            const swingFeel = document.getElementById('swingFeel').checked;
+
+            if (!name) {
+                alert('Please enter a section name');
+                return;
+            }
+
+            // If editing, update existing section
+            if (editingSection) {
+                // If name changed, need to handle arrangement updates
+                if (editingSection !== name) {
+                    // Update arrangement with new name
+                    arrangement = arrangement.map(sectionName => 
+                        sectionName === editingSection ? name : sectionName
+                    );
+                    // Delete old section
+                    delete sections[editingSection];
+                }
+                editingSection = null;
+                document.querySelector('button[onclick="addSection()"]').textContent = 'Add Section';
+            } else if (sections[name]) {
+                if (!confirm(`Section "${name}" already exists. Replace it?`)) {
+                    return;
+                }
+            }
+
+            sections[name] = { 
+                tempo, 
+                bars, 
+                timeSignature, 
+                subdivision, 
+                subdivisionVolume,
+                sound,
+                accentSectionStart,
+                swingFeel
+            };
+            
+            // Clear inputs
+            clearSectionForm();
+            
+            updateSectionDisplay();
+            updateAvailableSections();
+            updateArrangementDisplay();
+            autoSave(); // Auto-save after adding/updating section
+        }
+
+        // Clear section form
+        function clearSectionForm() {
+            document.getElementById('sectionName').value = '';
+            document.getElementById('sectionTempo').value = '120';
+            document.getElementById('sectionBars').value = '4';
+            document.getElementById('sectionTimeNumerator').value = '4';
+            document.getElementById('sectionTimeDenominator').value = '4';
+            document.getElementById('sectionSubdivision').value = '1';
+            document.getElementById('subdivisionVolume').value = '30';
+            document.getElementById('subdivisionVolumeDisplay').textContent = '30%';
+            document.getElementById('sectionSound').value = 'classic';
+            document.getElementById('accentSectionStart').checked = false;
+            document.getElementById('swingFeel').checked = false;
+            editingSection = null;
+            document.querySelector('button[onclick="addSection()"]').textContent = 'Add Section';
+        }
+
+        // Update section list display - SIMPLIFIED
+        function updateSectionDisplay() {
+            const container = document.getElementById('sectionList');
+            container.innerHTML = '';
+
+            Object.entries(sections).forEach(([name, data]) => {
+                const div = document.createElement('div');
+                div.className = 'section-item';
+                const subdivisionText = getSubdivisionText(data.subdivision || 1);
+                const soundText = getSoundText(data.sound || 'classic');
+                const accentText = data.accentSectionStart ? ', Section Accent' : '';
+                const swingText = data.swingFeel ? ', Swing' : '';
+                
+                // Create content span
+                const contentSpan = document.createElement('span');
+                contentSpan.innerHTML = `<strong>${name}</strong>: ${data.tempo}bpm, ${data.bars} bars, ${data.timeSignature}, ${subdivisionText}, ${soundText}${accentText}${swingText}`;
+                
+                // Create button container
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.display = 'flex';
+                buttonContainer.style.gap = '5px';
+                
+                // Create edit button
+                const editButton = document.createElement('button');
+                editButton.style.background = '#2196F3';
+                editButton.style.padding = '4px 8px';
+                editButton.style.fontSize = '12px';
+                editButton.textContent = 'Edit';
+                editButton.onclick = () => editSectionByName(name);
+                
+                // Create delete button
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'delete-btn';
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteSectionByName(name);
+                
+                buttonContainer.appendChild(editButton);
+                buttonContainer.appendChild(deleteButton);
+                
+                div.appendChild(contentSpan);
+                div.appendChild(buttonContainer);
+                container.appendChild(div);
+            });
+        }
+
+        // Helper function to get subdivision text
+        function getSubdivisionText(subdivision) {
+            const subdivisionMap = {
+                1: 'Quarter Notes',
+                2: '8th Notes', 
+                3: 'Triplets',
+                4: '16th Notes',
+                5: 'Quintuplets',
+                6: '16th Triplets',
+                7: 'Septuplets',
+                8: '32nd Notes'
+            };
+            return subdivisionMap[subdivision] || 'Quarter Notes';
+        }
+
+        // Helper function to get sound text
+        function getSoundText(sound) {
+            const soundMap = {
+                'classic': 'Classic',
+                'soft': 'Soft',
+                'sharp': 'Sharp',
+                'deep': 'Deep',
+                'silent': 'Silent'
+            };
+            return soundMap[sound] || 'Classic';
+        }
+
+        // Update visual metronome size and animation
+        function updateVisualMetronome() {
+            const flash = document.getElementById('metronomeFlash');
+            const currentTempo = getCurrentTempo();
+            
+            // Remove existing size classes
+            flash.classList.remove('normal', 'large', 'full');
+            
+            // Add current size class
+            flash.classList.add(visualSize);
+            
+            // Add breathing animation only when playing
+            if (isPlaying) {
+                flash.classList.add('breathing');
+                
+                // Adjust breathing speed based on tempo
+                if (currentTempo && currentTempo > 160) {
+                    flash.classList.add('fast-tempo');
+                } else {
+                    flash.classList.remove('fast-tempo');
+                }
+            }
+        }
+
+        // Get current tempo from active section
+        function getCurrentTempo() {
+            if (arrangement.length === 0 || !isPlaying) return null;
+            const currentSectionName = arrangement[currentArrangementIndex];
+            const currentSectionData = sections[currentSectionName];
+            return currentSectionData ? currentSectionData.tempo : null;
+        }
+
+        // Tap tempo functionality
+        function tapTempo() {
+            const now = Date.now();
+            tapTimes.push(now);
+            
+            // Clear existing timeout
+            if (tapTimeout) {
+                clearTimeout(tapTimeout);
+            }
+            
+            // Reset taps after 3 seconds of inactivity
+            tapTimeout = setTimeout(() => {
+                tapTimes = [];
+                updateTapTempoDisplay('Tap to set tempo');
+            }, 3000);
+            
+            // Need at least 2 taps to calculate tempo
+            if (tapTimes.length >= 2) {
+                const intervals = [];
+                for (let i = 1; i < tapTimes.length; i++) {
+                    intervals.push(tapTimes[i] - tapTimes[i-1]);
+                }
+                
+                // Calculate average interval in milliseconds
+                const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+                
+                // Convert to BPM (60000ms per minute)
+                const bpm = Math.round(60000 / avgInterval);
+                
+                // Clamp to reasonable range
+                const clampedBpm = Math.max(40, Math.min(220, bpm));
+                
+                updateTapTempoDisplay(`${clampedBpm} BPM (${tapTimes.length} taps)`);
+                
+                // After 3+ taps, suggest applying the tempo
+                if (tapTimes.length >= 3) {
+                    // Add apply button or auto-apply after a moment
+                    setTimeout(() => {
+                        if (confirm(`Apply tempo ${clampedBpm} BPM to current section?`)) {
+                            applyTapTempo(clampedBpm);
+                        }
+                    }, 500);
+                }
+            } else {
+                updateTapTempoDisplay('Tap again...');
+            }
+            
+            // Limit stored taps to last 8 for better accuracy
+            if (tapTimes.length > 8) {
+                tapTimes = tapTimes.slice(-8);
+            }
+        }
+
+        // Update tap tempo display
+        function updateTapTempoDisplay(text) {
+            const button = document.getElementById('tapButton');
+            button.innerHTML = `🎯 ${text}`;
+        }
+
+        // Apply detected tempo to the current section being edited or first section
+        function applyTapTempo(bpm) {
+            if (editingSection && sections[editingSection]) {
+                // Apply to section being edited
+                sections[editingSection].tempo = bpm;
+                document.getElementById('sectionTempo').value = bpm;
+                updateSectionDisplay();
+                tapTimes = [];
+                updateTapTempoDisplay('Applied! Tap to set tempo');
+            } else if (Object.keys(sections).length > 0) {
+                // Apply to first section if no section is being edited
+                const firstSection = Object.keys(sections)[0];
+                sections[firstSection].tempo = bpm;
+                updateSectionDisplay();
+                tapTimes = [];
+                updateTapTempoDisplay('Applied! Tap to set tempo');
+            } else {
+                // Create a new section with the tapped tempo
+                document.getElementById('sectionTempo').value = bpm;
+                tapTimes = [];
+                updateTapTempoDisplay('Tempo set! Tap to set tempo');
+            }
+        }
+
+        // Save/Load functionality
+        function saveArrangement() {
+            const arrangementName = prompt('Enter a name for this arrangement:', 'My Arrangement');
+            if (!arrangementName) return;
+            
+            const data = {
+                name: arrangementName,
+                sections: sections,
+                arrangement: arrangement,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Save to localStorage
+            const savedArrangements = JSON.parse(localStorage.getItem('timecraft_arrangements') || '{}');
+            savedArrangements[arrangementName] = data;
+            localStorage.setItem('timecraft_arrangements', JSON.stringify(savedArrangements));
+            
+            alert(`Arrangement "${arrangementName}" saved successfully!`);
+        }
+
+        function loadArrangement() {
+            const savedArrangements = JSON.parse(localStorage.getItem('timecraft_arrangements') || '{}');
+            const arrangementNames = Object.keys(savedArrangements);
+            
+            if (arrangementNames.length === 0) {
+                alert('No saved arrangements found.');
+                return;
+            }
+            
+            // Create selection dialog
+            let selection = 'Choose an arrangement to load:\n\n';
+            arrangementNames.forEach((name, index) => {
+                const timestamp = new Date(savedArrangements[name].timestamp).toLocaleString();
+                selection += `${index + 1}. ${name} (saved: ${timestamp})\n`;
+            });
+            
+            const choice = prompt(selection + '\nEnter the number of the arrangement to load:');
+            const choiceIndex = parseInt(choice) - 1;
+            
+            if (choiceIndex >= 0 && choiceIndex < arrangementNames.length) {
+                const selectedName = arrangementNames[choiceIndex];
+                const data = savedArrangements[selectedName];
+                
+                // Load the arrangement
+                sections = data.sections;
+                arrangement = data.arrangement;
+                
+                updateSectionDisplay();
+                updateAvailableSections();
+                updateArrangementDisplay();
+                updateStatus();
+                
+                alert(`Arrangement "${selectedName}" loaded successfully!`);
+            }
+        }
+
+        function exportArrangement() {
+            const arrangementName = prompt('Enter a name for the export file:', 'TimeCraft-Arrangement');
+            if (!arrangementName) return;
+            
+            const data = {
+                name: arrangementName,
+                sections: sections,
+                arrangement: arrangement,
+                timestamp: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            // Create download
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${arrangementName}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importArrangement(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Validate data structure
+                    if (!data.sections || !data.arrangement) {
+                        alert('Invalid arrangement file format.');
+                        return;
+                    }
+                    
+                    // Load the arrangement
+                    sections = data.sections;
+                    arrangement = data.arrangement;
+                    
+                    updateSectionDisplay();
+                    updateAvailableSections();
+                    updateArrangementDisplay();
+                    updateStatus();
+                    
+                    alert(`Arrangement "${data.name || 'Imported'}" loaded successfully!`);
+                } catch (error) {
+                    alert('Error reading arrangement file. Please check the file format.');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Clear the input so the same file can be selected again
+            event.target.value = '';
+        }
+
+        // Auto-save current state periodically
+        function autoSave() {
+            if (Object.keys(sections).length > 0 || arrangement.length > 0) {
+                const data = {
+                    sections: sections,
+                    arrangement: arrangement,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('timecraft_autosave', JSON.stringify(data));
+            }
+        }
+
+        // Auto-load last state on startup
+        function autoLoad() {
+            const autoSaveData = localStorage.getItem('timecraft_autosave');
+            if (autoSaveData) {
+                try {
+                    const data = JSON.parse(autoSaveData);
+                    // Only auto-load if current state is empty
+                    if (Object.keys(sections).length === 0 && arrangement.length === 0) {
+                        sections = data.sections || {};
+                        arrangement = data.arrangement || [];
+                    }
+                } catch (error) {
+                    console.log('Could not load auto-save data');
+                }
+            }
+        }
+
+        // Update available sections for arrangement building
+        function updateAvailableSections() {
+            const container = document.getElementById('availableSections');
+            container.innerHTML = '';
+
+            Object.keys(sections).forEach(name => {
+                const button = document.createElement('button');
+                button.textContent = name;
+                button.onclick = () => addToArrangement(name);
+                button.style.background = '#2196F3';
+                container.appendChild(button);
+            });
+        }
+
+        // Add section to arrangement
+        function addToArrangement(sectionName) {
+            arrangement.push(sectionName);
+            updateArrangementDisplay();
+            autoSave(); // Auto-save after modifying arrangement
+        }
+
+        // Update arrangement display
+        function updateArrangementDisplay() {
+            const container = document.getElementById('arrangement');
+            container.innerHTML = '';
+
+            arrangement.forEach((sectionName, index) => {
+                const div = document.createElement('div');
+                div.className = 'arrangement-item';
+                if (index === playingArrangementIndex && isPlaying && !isCountingIn) {
+                    div.classList.add('current');
+                }
+                div.textContent = sectionName;
+                div.onclick = () => removeFromArrangement(index);
+                div.title = 'Click to remove';
+                container.appendChild(div);
+            });
+
+            if (arrangement.length === 0) {
+                container.innerHTML = '<p style="opacity: 0.6; text-align: center; margin: 20px 0;">Click sections above to build your arrangement</p>';
+            }
+        }
+
+        // Remove from arrangement
+        function removeFromArrangement(index) {
+            arrangement.splice(index, 1);
+            if (currentArrangementIndex >= arrangement.length) {
+                currentArrangementIndex = 0;
+            }
+            updateArrangementDisplay();
+            autoSave(); // Auto-save after modifying arrangement
+        }
+
+        // Clear arrangement
+        function clearArrangement() {
+            arrangement = [];
+            currentArrangementIndex = 0;
+            updateArrangementDisplay();
+            autoSave(); // Auto-save after clearing arrangement
+        }
+
+        // Load preset arrangement
+        function loadPreset(type) {
+            switch (type) {
+                case 'verse-chorus':
+                    // Create default sections if they don't exist
+                    if (!sections['V']) {
+                        sections['V'] = { tempo: 120, bars: 8, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'classic', accentSectionStart: false };
+                    }
+                    if (!sections['C']) {
+                        sections['C'] = { tempo: 120, bars: 8, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'classic', accentSectionStart: false };
+                    }
+                    arrangement = ['V', 'V', 'C', 'V', 'C', 'C'];
+                    break;
+                
+                case 'drum-groove':
+                    sections['Kick'] = { tempo: 100, bars: 4, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 25, sound: 'deep', accentSectionStart: true };
+                    sections['Snare'] = { tempo: 100, bars: 4, timeSignature: '4/4', subdivision: 2, subdivisionVolume: 30, sound: 'sharp', accentSectionStart: true };
+                    sections['Hihat'] = { tempo: 100, bars: 4, timeSignature: '4/4', subdivision: 4, subdivisionVolume: 20, sound: 'classic', accentSectionStart: true };
+                    sections['Ride'] = { tempo: 100, bars: 4, timeSignature: '4/4', subdivision: 3, subdivisionVolume: 25, sound: 'soft', accentSectionStart: true };
+                    arrangement = ['Kick', 'Snare', 'Hihat', 'Ride', 'Kick', 'Snare'];
+                    break;
+                
+                case 'fill-practice':
+                    sections['Groove'] = { tempo: 110, bars: 7, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 25, sound: 'classic', accentSectionStart: false };
+                    sections['Fill'] = { tempo: 110, bars: 1, timeSignature: '4/4', subdivision: 4, subdivisionVolume: 35, sound: 'sharp', accentSectionStart: true };
+                    arrangement = ['Groove', 'Fill', 'Groove', 'Fill', 'Groove', 'Fill'];
+                    break;
+                
+                case 'tempo-build':
+                    sections['80bpm'] = { tempo: 80, bars: 8, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'deep', accentSectionStart: true };
+                    sections['100bpm'] = { tempo: 100, bars: 8, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'classic', accentSectionStart: true };
+                    sections['120bpm'] = { tempo: 120, bars: 8, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'sharp', accentSectionStart: true };
+                    sections['140bpm'] = { tempo: 140, bars: 8, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'soft', accentSectionStart: true };
+                    arrangement = ['80bpm', '100bpm', '120bpm', '140bpm'];
+                    break;
+                
+                case 'limb-independence':
+                    sections['R.Hand'] = { tempo: 90, bars: 4, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'classic', accentSectionStart: true };
+                    sections['L.Hand'] = { tempo: 90, bars: 4, timeSignature: '4/4', subdivision: 2, subdivisionVolume: 25, sound: 'soft', accentSectionStart: true };
+                    sections['R.Foot'] = { tempo: 90, bars: 4, timeSignature: '4/4', subdivision: 3, subdivisionVolume: 20, sound: 'deep', accentSectionStart: true };
+                    sections['L.Foot'] = { tempo: 90, bars: 4, timeSignature: '4/4', subdivision: 4, subdivisionVolume: 15, sound: 'sharp', accentSectionStart: true };
+                    arrangement = ['R.Hand', 'L.Hand', 'R.Foot', 'L.Foot', 'R.Hand', 'L.Hand'];
+                    break;
+                
+                case 'gap-click':
+                    sections['Click'] = { tempo: 100, bars: 1, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'classic', accentSectionStart: true };
+                    sections['Gap'] = { tempo: 100, bars: 1, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'silent', accentSectionStart: false };
+                    arrangement = ['Click', 'Gap', 'Click', 'Gap', 'Click', 'Gap', 'Click', 'Gap'];
+                    break;
+                
+                case 'gap-click-short':
+                    sections['Click3'] = { tempo: 100, bars: 3, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'classic', accentSectionStart: true };
+                    sections['Gap1'] = { tempo: 100, bars: 1, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'silent', accentSectionStart: false };
+                    arrangement = ['Click3', 'Gap1', 'Click3', 'Gap1', 'Click3', 'Gap1'];
+                    break;
+                
+                case 'swing-practice':
+                    sections['Straight'] = { tempo: 120, bars: 4, timeSignature: '4/4', subdivision: 2, subdivisionVolume: 25, sound: 'classic', accentSectionStart: true, swingFeel: false };
+                    sections['Swing'] = { tempo: 120, bars: 4, timeSignature: '4/4', subdivision: 2, subdivisionVolume: 25, sound: 'soft', accentSectionStart: true, swingFeel: true };
+                    sections['Shuffle'] = { tempo: 100, bars: 4, timeSignature: '4/4', subdivision: 4, subdivisionVolume: 20, sound: 'deep', accentSectionStart: true, swingFeel: true };
+                    arrangement = ['Straight', 'Swing', 'Straight', 'Shuffle'];
+                    break;
+            }
+            
+            updateSectionDisplay();
+            updateAvailableSections();
+            updateArrangementDisplay();
+            autoSave(); // Auto-save after loading preset
+        }
+
+        // Toggle playback
+        function togglePlayback() {
+            initAudio();
+            
+            if (isPlaying) {
+                stopPlayback();
+            } else {
+                startPlayback();
+            }
+        }
+
+        // Start playback
+        function startPlayback() {
+            if (arrangement.length === 0) {
+                alert('Please create an arrangement first');
+                return;
+            }
+
+            isPlaying = true;
+            nextBeatTime = audioContext.currentTime;
+            
+            // Initialize count-in if enabled
+            if (countInBars > 0) {
+                isCountingIn = true;
+                countInBar = 1;
+                countInBeat = 1;
+                // Don't initialize main arrangement yet
+                playingArrangementIndex = 0;
+                playingBar = 1;
+                playingBeat = 1;
+            } else {
+                isCountingIn = false;
+                currentArrangementIndex = 0;
+                currentBar = 1;
+                currentBeat = 1;
+                playingArrangementIndex = 0;
+                playingBar = 1;
+                playingBeat = 1;
+            }
+            
+            document.getElementById('playButton').textContent = '⏸ PAUSE';
+            
+            scheduler();
+            schedulerTimer = setInterval(scheduler, lookahead);
+            updateArrangementDisplay();
+            updateVisualMetronome(); // Start breathing animation
+        }
+
+        // Stop playback
+        function stopPlayback() {
+            isPlaying = false;
+            clearInterval(schedulerTimer);
+            
+            // Reset all playback state
+            isCountingIn = false;
+            countInBar = 1;
+            countInBeat = 1;
+            currentArrangementIndex = 0;
+            currentBar = 1;
+            currentBeat = 1;
+            playingArrangementIndex = 0;
+            playingBar = 1;
+            playingBeat = 1;
+            
+            document.getElementById('playButton').textContent = '▶ PLAY';
+            updateArrangementDisplay();
+            updateStatus();
+            
+            // Stop breathing animation
+            const flash = document.getElementById('metronomeFlash');
+            flash.classList.remove('breathing', 'fast-tempo');
+            updateVisualMetronome(); // Ensure correct size class
+        }
+
+        // Initialize with example sections
+        function init() {
+            // Try to load previous state first
+            autoLoad();
+            
+            // If no previous state, load defaults
+            if (Object.keys(sections).length === 0) {
+                sections = {
+                    'A': { tempo: 120, bars: 4, timeSignature: '4/4', subdivision: 1, subdivisionVolume: 30, sound: 'classic', accentSectionStart: false },
+                    'B': { tempo: 120, bars: 4, timeSignature: '4/4', subdivision: 3, subdivisionVolume: 30, sound: 'classic', accentSectionStart: false },
+                    'C': { tempo: 120, bars: 4, timeSignature: '4/4', subdivision: 5, subdivisionVolume: 30, sound: 'classic', accentSectionStart: false }
+                };
+                arrangement = ['A', 'B', 'A', 'C'];
+            }
+            
+            updateSectionDisplay();
+            updateAvailableSections();
+            updateArrangementDisplay();
+            updateStatus();
+            
+            // Add volume slider update listeners
+            const volumeSlider = document.getElementById('subdivisionVolume');
+            const volumeDisplay = document.getElementById('subdivisionVolumeDisplay');
+            volumeSlider.addEventListener('input', function() {
+                volumeDisplay.textContent = this.value + '%';
+            });
+
+            // Global volume controls
+            const globalMainVolumeSlider = document.getElementById('globalMainVolume');
+            const globalMainVolumeDisplay = document.getElementById('globalMainVolumeDisplay');
+            globalMainVolumeSlider.addEventListener('input', function() {
+                globalMainVolume = parseInt(this.value);
+                globalMainVolumeDisplay.textContent = this.value + '%';
+            });
+
+            const globalSubVolumeSlider = document.getElementById('globalSubVolume');
+            const globalSubVolumeDisplay = document.getElementById('globalSubVolumeDisplay');
+            globalSubVolumeSlider.addEventListener('input', function() {
+                globalSubVolume = parseInt(this.value);
+                globalSubVolumeDisplay.textContent = this.value + '%';
+            });
+
+            // Visual size control
+            const visualSizeSelector = document.getElementById('visualSize');
+            visualSizeSelector.addEventListener('change', function() {
+                visualSize = this.value;
+                updateVisualMetronome();
+            });
+
+            // Count-in control
+            const countInSelector = document.getElementById('countInBars');
+            countInSelector.addEventListener('change', function() {
+                countInBars = parseInt(this.value);
+            });
+
+            // Initialize visual metronome
+            updateVisualMetronome();
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
