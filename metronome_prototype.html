@@ -16,10 +16,9 @@
     <link rel="manifest" href="./manifest.json">
     
     <!-- Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
-    <link rel="apple-touch-icon" href="./icon-192.png">
-    <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
+    <link rel="icon" type="image/svg+xml" href="./icon-192.svg">
+    <link rel="apple-touch-icon" href="./icon-192.svg">
+    <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.svg">
     <style>
         * {
             margin: 0;
@@ -2443,6 +2442,23 @@
             showInstallButton();
         });
 
+        // Debug: Check PWA install criteria
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                console.log('PWA Debug Info:');
+                console.log('- Service Worker:', 'serviceWorker' in navigator);
+                console.log('- HTTPS:', location.protocol === 'https:');
+                console.log('- Standalone:', window.matchMedia('(display-mode: standalone)').matches);
+                console.log('- Install prompt received:', !!deferredPrompt);
+                
+                // Show install button manually if criteria are met but prompt didn't fire
+                if (!deferredPrompt && 'serviceWorker' in navigator && location.protocol === 'https:') {
+                    console.log('Manually showing install button for testing');
+                    showManualInstallButton();
+                }
+            }, 3000);
+        });
+
         function showInstallButton() {
             // Only show if not already installed
             if (!window.matchMedia('(display-mode: standalone)').matches) {
@@ -2499,14 +2515,50 @@
             }
         }
 
+        // Manual install button for browsers that don't show automatic prompt
+        function showManualInstallButton() {
+            const installButton = document.createElement('button');
+            installButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #FF9800;
+                color: white;
+                border: none;
+                border-radius: 50px;
+                padding: 15px 20px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(255,152,0,0.4);
+                z-index: 1000;
+            `;
+            installButton.innerHTML = '📱 Add to Home Screen';
+            
+            installButton.onclick = () => {
+                alert('To install TimeCraft:\n\n• Android Chrome: Menu → "Add to Home screen"\n• iOS Safari: Share → "Add to Home Screen"');
+            };
+            
+            document.body.appendChild(installButton);
+            
+            // Auto-hide after 45 seconds
+            setTimeout(() => {
+                if (installButton.parentNode) {
+                    installButton.remove();
+                }
+            }, 45000);
+        }
+
         // Handle app installation
         window.addEventListener('appinstalled', (evt) => {
             console.log('TimeCraft PWA was installed');
             // Remove install button if present
-            const installButton = document.querySelector('button[onclick*="deferredPrompt"]');
-            if (installButton) {
-                installButton.remove();
-            }
+            const installButtons = document.querySelectorAll('button');
+            installButtons.forEach(btn => {
+                if (btn.innerHTML.includes('Install') || btn.innerHTML.includes('Add to Home')) {
+                    btn.remove();
+                }
+            });
         });
 
         // Register service worker
