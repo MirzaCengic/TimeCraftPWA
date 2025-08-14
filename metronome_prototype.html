@@ -3,7 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Section Metronome</title>
+    <title>TimeCraft Metronome</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Professional section-based metronome for intermediate to advanced musicians">
+    <meta name="theme-color" content="#764ba2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TimeCraft">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
     <style>
         * {
             margin: 0;
@@ -11,12 +27,69 @@
             box-sizing: border-box;
         }
 
+        /* CSS Variables for theming */
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-panel: rgba(255,255,255,0.1);
+            --text-primary: white;
+            --text-secondary: rgba(255,255,255,0.8);
+            --accent-primary: #4CAF50;
+            --accent-secondary: #2196F3;
+            --accent-warning: #FF9800;
+            --accent-danger: #f44336;
+            --border-color: rgba(255,255,255,0.2);
+            --shadow-color: rgba(0,0,0,0.3);
+        }
+
+        /* Light Theme */
+        [data-theme="light"] {
+            --bg-primary: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-panel: rgba(255,255,255,0.8);
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --accent-primary: #4CAF50;
+            --accent-secondary: #2196F3;
+            --accent-warning: #FF9800;
+            --accent-danger: #f44336;
+            --border-color: rgba(0,0,0,0.1);
+            --shadow-color: rgba(0,0,0,0.2);
+        }
+
+        /* High Contrast Theme */
+        [data-theme="contrast"] {
+            --bg-primary: #000000;
+            --bg-panel: #111111;
+            --text-primary: #FFFFFF;
+            --text-secondary: #CCCCCC;
+            --accent-primary: #00FF00;
+            --accent-secondary: #0088FF;
+            --accent-warning: #FFFF00;
+            --accent-danger: #FF0000;
+            --border-color: #FFFFFF;
+            --shadow-color: rgba(255,255,255,0.3);
+        }
+
+        /* Stage Theme (Orange tint for warm stage lighting) */
+        [data-theme="stage"] {
+            --bg-primary: linear-gradient(135deg, #2D1B13 0%, #4A2C1A 100%);
+            --bg-panel: rgba(255,165,0,0.1);
+            --text-primary: #FFA500;
+            --text-secondary: rgba(255,165,0,0.8);
+            --accent-primary: #FF8C00;
+            --accent-secondary: #FFB347;
+            --accent-warning: #FF6347;
+            --accent-danger: #DC143C;
+            --border-color: rgba(255,165,0,0.3);
+            --shadow-color: rgba(255,140,0,0.3);
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
             padding: 20px;
+            transition: all 0.3s ease;
         }
 
         .container {
@@ -43,16 +116,17 @@
         }
 
         .panel {
-            background: rgba(255,255,255,0.1);
+            background: var(--bg-panel);
             backdrop-filter: blur(10px);
             border-radius: 15px;
             padding: 25px;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
         }
 
         .panel h2 {
             margin-bottom: 20px;
-            color: #fff;
+            color: var(--text-primary);
             font-size: 1.5rem;
         }
 
@@ -73,10 +147,11 @@
         }
 
         input, select, button {
-            padding: 8px 12px;
+            padding: 12px 16px;
             border: none;
             border-radius: 6px;
             font-size: 14px;
+            min-height: 44px;
         }
 
         input, select {
@@ -86,7 +161,7 @@
         }
 
         button {
-            background: #4CAF50;
+            background: var(--accent-primary);
             color: white;
             cursor: pointer;
             font-weight: 600;
@@ -122,8 +197,10 @@
 
         .delete-btn {
             background: #f44336;
-            padding: 4px 8px;
+            padding: 8px 12px;
             font-size: 12px;
+            min-height: 36px;
+            min-width: 60px;
         }
 
         .delete-btn:hover {
@@ -145,11 +222,30 @@
         .arrangement-item {
             background: #4CAF50;
             color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
+            padding: 12px 20px;
+            border-radius: 25px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: 600;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            user-select: none;
+            position: relative;
+        }
+
+        .arrangement-item.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+            z-index: 1000;
+        }
+
+        .arrangement-item.drag-over {
+            transform: scale(1.1);
+            background: #66BB6A;
+            box-shadow: 0 0 20px rgba(102, 187, 106, 0.5);
         }
 
         .arrangement-item:hover {
@@ -175,9 +271,11 @@
         }
 
         .transport-controls button {
-            padding: 15px 30px;
+            padding: 20px 35px;
             font-size: 18px;
-            border-radius: 10px;
+            border-radius: 15px;
+            min-height: 60px;
+            min-width: 120px;
         }
 
         .play-btn {
@@ -212,6 +310,20 @@
             margin: 0 auto 20px;
             transition: all 0.15s ease;
             position: relative;
+            border: 3px solid rgba(255,255,255,0.4);
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+
+        .metronome-flash::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            right: -15px;
+            bottom: -15px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.2);
+            pointer-events: none;
         }
 
         .metronome-flash.normal {
@@ -230,8 +342,57 @@
         }
 
         .metronome-flash.beat {
-            background: #ffff00;
-            box-shadow: 0 0 30px rgba(255, 255, 0, 0.8);
+            background: linear-gradient(45deg, #00ff88, #00cc66);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
+            border-color: rgba(0, 255, 136, 0.6);
+            transform: scale(1.1);
+        }
+
+        .metronome-flash.beat.accent {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            box-shadow: 0 0 50px rgba(255, 107, 53, 0.9);
+            border-color: rgba(255, 107, 53, 0.7);
+            transform: scale(1.15);
+        }
+
+        .metronome-flash.beat.section-start {
+            background: linear-gradient(45deg, #ff3068, #ff6b9d);
+            box-shadow: 0 0 60px rgba(255, 48, 104, 1.0);
+            border-color: rgba(255, 48, 104, 0.8);
+            transform: scale(1.2);
+        }
+
+        .metronome-flash.beat.count-in {
+            background: linear-gradient(45deg, #ff9800, #ffc107);
+            box-shadow: 0 0 35px rgba(255, 152, 0, 0.8);
+            border-color: rgba(255, 152, 0, 0.6);
+            transform: scale(1.05);
+        }
+
+        /* Subdivision dots around metronome */
+        .subdivision-indicators {
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            right: -20px;
+            bottom: -20px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .subdivision-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .subdivision-dot.active {
+            background: #00ff88;
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+            transform: scale(1.3);
         }
 
         /* Breathing animation for relaxed feel */
@@ -266,13 +427,173 @@
             }
         }
 
-        @media (max-width: 768px) {
+        /* Performance Mode Styles */
+        .performance-mode .section-builder-panel,
+        .performance-mode .arrangement-builder-panel {
+            display: none;
+        }
+
+        .performance-mode .main-controls {
+            grid-template-columns: 1fr;
+        }
+
+        .performance-mode .metronome-flash {
+            width: 400px !important;
+            height: 400px !important;
+            margin: 0 auto 30px;
+        }
+
+        .performance-mode .status {
+            font-size: 1.2em;
+        }
+
+        .performance-mode .status-value {
+            font-size: 4rem !important;
+            font-weight: 900;
+        }
+
+        .performance-mode .status-item {
+            padding: 25px;
+            background: rgba(255,255,255,0.15) !important;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .performance-mode h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .performance-mode .transport-controls {
+            margin: 40px 0;
+        }
+
+        .performance-mode .transport-controls button {
+            font-size: 22px;
+            padding: 25px 40px;
+            min-height: 70px;
+            min-width: 140px;
+        }
+
+        /* Mobile Portrait Optimizations */
+        @media (max-width: 768px) and (orientation: portrait) {
+            .main-controls {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .status {
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+            }
+
+            .performance-mode .metronome-flash {
+                width: 280px !important;
+                height: 280px !important;
+            }
+
+            .performance-mode .status-value {
+                font-size: 2.5rem !important;
+            }
+
+            .performance-mode .transport-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .performance-mode .transport-controls button {
+                font-size: 18px;
+                padding: 18px 30px;
+                min-height: 55px;
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            body {
+                padding: 10px;
+            }
+        }
+
+        /* Mobile Landscape Optimizations */
+        @media (max-width: 768px) and (orientation: landscape) {
             .main-controls {
                 grid-template-columns: 1fr;
             }
             
             .status {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+
+            .performance-mode .metronome-flash {
+                width: 200px !important;
+                height: 200px !important;
+            }
+
+            .performance-mode .status-value {
+                font-size: 2rem !important;
+            }
+
+            .performance-mode .status-item {
+                padding: 15px 10px;
+            }
+
+            .performance-mode .transport-controls button {
+                font-size: 16px;
+                padding: 15px 25px;
+                min-height: 50px;
+                min-width: 100px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+                margin-bottom: 5px;
+            }
+
+            .header {
+                margin-bottom: 20px;
+            }
+        }
+
+        /* Tablet Portrait */
+        @media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
+            .performance-mode .metronome-flash {
+                width: 350px !important;
+                height: 350px !important;
+            }
+
+            .performance-mode .status-value {
+                font-size: 3.5rem !important;
+            }
+        }
+
+        /* Small screens general */
+        @media (max-width: 768px) {
+            .section-builder {
+                gap: 12px;
+            }
+
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 5px;
+            }
+
+            .input-group label {
+                min-width: auto;
+                font-size: 14px;
+            }
+
+            .transport-controls {
+                gap: 15px;
             }
         }
     </style>
@@ -280,13 +601,25 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎵 Section Metronome</h1>
+            <h1>🎵 TimeCraft Metronome</h1>
             <p>Program sections, build arrangements, practice with structure</p>
         </div>
 
         <div class="main-controls">
-            <div class="panel">
+            <div class="panel section-builder-panel">
                 <h2>Section Builder</h2>
+                <div style="margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 15px; font-size: 1.1rem; opacity: 0.9;">Quick Templates</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
+                        <button onclick="quickSection('A', 120, 4, '4/4')" style="background: #9C27B0; font-size: 12px;">120 BPM 4/4</button>
+                        <button onclick="quickSection('B', 140, 4, '4/4')" style="background: #9C27B0; font-size: 12px;">140 Fast</button>
+                        <button onclick="quickSection('C', 90, 8, '4/4')" style="background: #9C27B0; font-size: 12px;">90 Ballad</button>
+                        <button onclick="quickSection('D', 160, 4, '4/4')" style="background: #9C27B0; font-size: 12px;">160 Rock</button>
+                        <button onclick="quickSection('V', 120, 8, '4/4')" style="background: #4CAF50; font-size: 12px;">Verse</button>
+                        <button onclick="quickSection('C', 130, 8, '4/4')" style="background: #FF9800; font-size: 12px;">Chorus</button>
+                    </div>
+                </div>
+
                 <div class="section-builder">
                     <div class="input-group">
                         <label>Name:</label>
@@ -363,7 +696,7 @@
                 </div>
             </div>
 
-            <div class="panel">
+            <div class="panel arrangement-builder-panel">
                 <h2>Arrangement Builder</h2>
                 <p style="margin-bottom: 15px; opacity: 0.8;">Click sections to add to arrangement:</p>
                 
@@ -400,7 +733,18 @@
         <div class="panel playback-panel">
             <h2>Playback Control</h2>
             
-            <div class="metronome-flash" id="metronomeFlash"></div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button onclick="toggleMode()" id="modeToggle" 
+                        style="background: #9C27B0; padding: 12px 24px; font-size: 16px; font-weight: 600;">
+                    📱 Performance Mode
+                </button>
+            </div>
+            
+            <div class="metronome-flash" id="metronomeFlash">
+                <div class="subdivision-indicators" id="subdivisionIndicators">
+                    <!-- Subdivision dots will be added here dynamically -->
+                </div>
+            </div>
             
             <div class="transport-controls">
                 <button class="play-btn" onclick="togglePlayback()" id="playButton">▶ PLAY</button>
@@ -424,6 +768,15 @@
                         <option value="normal">Normal</option>
                         <option value="large">Large</option>
                         <option value="full">Full</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: 600;">Theme:</label>
+                    <select id="themeSelector" style="width: 100px;">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                        <option value="contrast">High Contrast</option>
+                        <option value="stage">Stage</option>
                     </select>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -491,6 +844,7 @@
         let isCountingIn = false; // Track if we're in count-in phase
         let countInBar = 1; // Current count-in bar
         let countInBeat = 1; // Current count-in beat
+        let isPerformanceMode = false; // Track interface mode
 
         // Simple delete function - exposed globally
         window.deleteSectionByName = function(sectionName) {
@@ -663,13 +1017,29 @@
             oscillator.start(time);
             oscillator.stop(time + duration);
 
-            // Visual feedback - flash brighter for main beats and section starts
+            // Enhanced visual feedback with color coding
             if (Math.abs(time - audioContext.currentTime) < 0.1) {
                 const flash = document.getElementById('metronomeFlash');
                 if (!subdivision) {
+                    // Remove any existing beat classes
+                    flash.classList.remove('beat', 'accent', 'section-start');
+                    
+                    // Add appropriate classes
                     flash.classList.add('beat');
-                    setTimeout(() => flash.classList.remove('beat'), isSectionStart ? 200 : 100);
+                    if (isSectionStart) {
+                        flash.classList.add('section-start');
+                    } else if (accent) {
+                        flash.classList.add('accent');
+                    }
+                    
+                    // Longer flash duration for better visibility
+                    setTimeout(() => {
+                        flash.classList.remove('beat', 'accent', 'section-start');
+                    }, isSectionStart ? 300 : (accent ? 200 : 150));
                 }
+                
+                // Update subdivision indicators
+                updateSubdivisionIndicators(subdivision, false);
             }
         }
 
@@ -700,16 +1070,13 @@
             oscillator.start(time);
             oscillator.stop(time + duration);
 
-            // Visual feedback for count-in
+            // Enhanced visual feedback for count-in
             if (Math.abs(time - audioContext.currentTime) < 0.1) {
                 const flash = document.getElementById('metronomeFlash');
-                flash.classList.add('beat');
-                // Use orange color for count-in
-                flash.style.backgroundColor = '#ff9800';
+                flash.classList.add('beat', 'count-in');
                 setTimeout(() => {
-                    flash.classList.remove('beat');
-                    flash.style.backgroundColor = '';
-                }, 100);
+                    flash.classList.remove('beat', 'count-in');
+                }, 200); // Longer flash duration
             }
         }
 
@@ -1029,8 +1396,10 @@
                 // Create edit button
                 const editButton = document.createElement('button');
                 editButton.style.background = '#2196F3';
-                editButton.style.padding = '4px 8px';
+                editButton.style.padding = '8px 12px';
                 editButton.style.fontSize = '12px';
+                editButton.style.minHeight = '36px';
+                editButton.style.minWidth = '50px';
                 editButton.textContent = 'Edit';
                 editButton.onclick = () => editSectionByName(name);
                 
@@ -1097,6 +1466,66 @@
                 } else {
                     flash.classList.remove('fast-tempo');
                 }
+            }
+            
+            // Update subdivision indicators for current section
+            if (isPlaying && arrangement.length > 0) {
+                const currentSectionName = arrangement[currentArrangementIndex];
+                const currentSectionData = sections[currentSectionName];
+                if (currentSectionData) {
+                    createSubdivisionIndicators(currentSectionData.subdivision || 1);
+                }
+            } else {
+                createSubdivisionIndicators(1); // Default to quarter notes when not playing
+            }
+        }
+
+        // Create subdivision indicator dots around metronome
+        function createSubdivisionIndicators(subdivision) {
+            const container = document.getElementById('subdivisionIndicators');
+            container.innerHTML = '';
+            
+            // Don't show dots for quarter notes (subdivision = 1)
+            if (subdivision <= 1) return;
+            
+            const radius = 60; // Distance from center
+            const totalDots = subdivision;
+            
+            for (let i = 0; i < totalDots; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'subdivision-dot';
+                dot.id = `subdivision-dot-${i}`;
+                
+                // Calculate position around circle (starting at top, going clockwise)
+                const angle = (i * 360 / totalDots - 90) * (Math.PI / 180); // -90 to start at top
+                const x = radius * Math.cos(angle);
+                const y = radius * Math.sin(angle);
+                
+                dot.style.left = `calc(50% + ${x}px - 4px)`;
+                dot.style.top = `calc(50% + ${y}px - 4px)`;
+                
+                container.appendChild(dot);
+            }
+        }
+
+        // Update subdivision indicators to show current subdivision beat
+        function updateSubdivisionIndicators(subdivision, isSubdivision) {
+            if (subdivision <= 1) return;
+            
+            // Clear all active dots
+            const dots = document.querySelectorAll('.subdivision-dot');
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            if (isSubdivision) {
+                // Light up subdivision dots sequentially
+                // This would need more complex logic to track which subdivision we're on
+                // For now, just show a brief flash
+                dots.forEach((dot, index) => {
+                    setTimeout(() => {
+                        dot.classList.add('active');
+                        setTimeout(() => dot.classList.remove('active'), 100);
+                    }, index * 20);
+                });
             }
         }
 
@@ -1345,6 +1774,9 @@
                 button.textContent = name;
                 button.onclick = () => addToArrangement(name);
                 button.style.background = '#2196F3';
+                button.style.minHeight = '44px';
+                button.style.minWidth = '44px';
+                button.style.padding = '12px 16px';
                 container.appendChild(button);
             });
         }
@@ -1356,7 +1788,7 @@
             autoSave(); // Auto-save after modifying arrangement
         }
 
-        // Update arrangement display
+        // Update arrangement display with drag & drop support
         function updateArrangementDisplay() {
             const container = document.getElementById('arrangement');
             container.innerHTML = '';
@@ -1368,14 +1800,93 @@
                     div.classList.add('current');
                 }
                 div.textContent = sectionName;
-                div.onclick = () => removeFromArrangement(index);
-                div.title = 'Click to remove';
+                div.draggable = true;
+                div.dataset.index = index;
+                
+                // Drag and drop event listeners
+                div.addEventListener('dragstart', handleDragStart);
+                div.addEventListener('dragover', handleDragOver);
+                div.addEventListener('drop', handleDrop);
+                div.addEventListener('dragend', handleDragEnd);
+                div.addEventListener('dragenter', handleDragEnter);
+                div.addEventListener('dragleave', handleDragLeave);
+                
+                // Click to remove (with slight delay to avoid conflict with drag)
+                div.addEventListener('click', (e) => {
+                    if (!div.classList.contains('dragging')) {
+                        setTimeout(() => removeFromArrangement(index), 100);
+                    }
+                });
+                
+                div.title = 'Drag to reorder, click to remove';
                 container.appendChild(div);
             });
 
             if (arrangement.length === 0) {
                 container.innerHTML = '<p style="opacity: 0.6; text-align: center; margin: 20px 0;">Click sections above to build your arrangement</p>';
             }
+        }
+
+        // Drag and drop handlers
+        let draggedElement = null;
+        let draggedIndex = null;
+
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            draggedIndex = parseInt(e.target.dataset.index);
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.outerHTML);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e) {
+            if (e.target.classList.contains('arrangement-item') && e.target !== draggedElement) {
+                e.target.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            if (e.target.classList.contains('arrangement-item')) {
+                e.target.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            if (e.target.classList.contains('arrangement-item') && e.target !== draggedElement) {
+                const targetIndex = parseInt(e.target.dataset.index);
+                
+                // Reorder arrangement array
+                const draggedItem = arrangement[draggedIndex];
+                arrangement.splice(draggedIndex, 1);
+                arrangement.splice(targetIndex, 0, draggedItem);
+                
+                // Update current arrangement index if needed
+                if (draggedIndex === currentArrangementIndex) {
+                    currentArrangementIndex = targetIndex;
+                } else if (draggedIndex < currentArrangementIndex && targetIndex >= currentArrangementIndex) {
+                    currentArrangementIndex--;
+                } else if (draggedIndex > currentArrangementIndex && targetIndex <= currentArrangementIndex) {
+                    currentArrangementIndex++;
+                }
+                
+                updateArrangementDisplay();
+                autoSave();
+            }
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.arrangement-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            draggedElement = null;
+            draggedIndex = null;
         }
 
         // Remove from arrangement
@@ -1595,9 +2106,411 @@
                 countInBars = parseInt(this.value);
             });
 
+            // Theme selector
+            const themeSelector = document.getElementById('themeSelector');
+            themeSelector.addEventListener('change', function() {
+                setTheme(this.value);
+            });
+
+            // Load saved theme
+            const savedTheme = localStorage.getItem('timecraft_theme') || 'dark';
+            setTheme(savedTheme);
+            themeSelector.value = savedTheme;
+
             // Initialize visual metronome
             updateVisualMetronome();
         }
+
+        // Quick section creation function
+        function quickSection(name, tempo, bars, timeSignature) {
+            // Check if section exists
+            if (sections[name] && !confirm(`Section "${name}" already exists. Replace it?`)) {
+                return;
+            }
+            
+            // Create section with smart defaults
+            sections[name] = {
+                tempo: tempo,
+                bars: bars,
+                timeSignature: timeSignature,
+                subdivision: 1, // Default to quarter notes
+                subdivisionVolume: 30,
+                sound: 'classic',
+                accentSectionStart: false,
+                swingFeel: false
+            };
+            
+            // Update displays
+            updateSectionDisplay();
+            updateAvailableSections();
+            autoSave();
+            
+            // Auto-add to arrangement if empty
+            if (arrangement.length === 0) {
+                arrangement.push(name);
+                updateArrangementDisplay();
+            }
+        }
+
+        // Toggle between setup and performance modes
+        function toggleMode() {
+            isPerformanceMode = !isPerformanceMode;
+            const body = document.body;
+            const button = document.getElementById('modeToggle');
+            
+            if (isPerformanceMode) {
+                body.classList.add('performance-mode');
+                button.textContent = '⚙️ Setup Mode';
+                button.style.background = '#4CAF50';
+            } else {
+                body.classList.remove('performance-mode');
+                button.textContent = '📱 Performance Mode';
+                button.style.background = '#9C27B0';
+            }
+            
+            updateVisualMetronome();
+        }
+
+        // Keyboard shortcuts
+        function handleKeyboardShortcuts(event) {
+            // Don't trigger shortcuts when typing in input fields
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT') {
+                return;
+            }
+            
+            switch (event.code) {
+                case 'Space':
+                    event.preventDefault();
+                    togglePlayback();
+                    break;
+                    
+                case 'ArrowUp':
+                    event.preventDefault();
+                    adjustTempo(event.shiftKey ? 10 : 5);
+                    break;
+                    
+                case 'ArrowDown':
+                    event.preventDefault();
+                    adjustTempo(event.shiftKey ? -10 : -5);
+                    break;
+                    
+                case 'ArrowLeft':
+                    event.preventDefault();
+                    if (isPlaying) jumpToArrangementPosition(-1);
+                    break;
+                    
+                case 'ArrowRight':
+                    event.preventDefault();
+                    if (isPlaying) jumpToArrangementPosition(1);
+                    break;
+                    
+                case 'KeyM':
+                    event.preventDefault();
+                    toggleMode();
+                    break;
+                    
+                case 'KeyT':
+                    event.preventDefault();
+                    tapTempo();
+                    break;
+                    
+                case 'KeyN':
+                    event.preventDefault();
+                    if (!isPerformanceMode) {
+                        document.getElementById('sectionName').focus();
+                    }
+                    break;
+                    
+                case 'KeyC':
+                    event.preventDefault();
+                    if (!isPerformanceMode) {
+                        clearArrangement();
+                    }
+                    break;
+                    
+                // Number keys 1-9 for quick arrangement jumping
+                case 'Digit1':
+                case 'Digit2':
+                case 'Digit3':
+                case 'Digit4':
+                case 'Digit5':
+                case 'Digit6':
+                case 'Digit7':
+                case 'Digit8':
+                case 'Digit9':
+                    event.preventDefault();
+                    const position = parseInt(event.code.replace('Digit', '')) - 1;
+                    if (isPlaying && position < arrangement.length) {
+                        jumpToArrangementPosition(position, true);
+                    }
+                    break;
+            }
+        }
+
+        // Adjust tempo of current section or first section
+        function adjustTempo(delta) {
+            let targetSection = null;
+            
+            if (editingSection && sections[editingSection]) {
+                targetSection = editingSection;
+            } else if (isPlaying && arrangement.length > 0) {
+                targetSection = arrangement[currentArrangementIndex];
+            } else if (Object.keys(sections).length > 0) {
+                targetSection = Object.keys(sections)[0];
+            }
+            
+            if (targetSection && sections[targetSection]) {
+                const newTempo = Math.max(40, Math.min(220, sections[targetSection].tempo + delta));
+                sections[targetSection].tempo = newTempo;
+                
+                // Update form if editing
+                if (editingSection === targetSection) {
+                    document.getElementById('sectionTempo').value = newTempo;
+                }
+                
+                updateSectionDisplay();
+                updateStatus();
+                autoSave();
+                
+                // Show tempo change feedback
+                showTempoFeedback(targetSection, newTempo, delta);
+            }
+        }
+
+        // Jump to specific arrangement position
+        function jumpToArrangementPosition(delta, absolute = false) {
+            if (!isPlaying || arrangement.length === 0) return;
+            
+            let newIndex;
+            if (absolute) {
+                newIndex = delta;
+            } else {
+                newIndex = currentArrangementIndex + delta;
+            }
+            
+            // Wrap around arrangement
+            if (newIndex < 0) {
+                newIndex = arrangement.length - 1;
+            } else if (newIndex >= arrangement.length) {
+                newIndex = 0;
+            }
+            
+            // Update current position
+            currentArrangementIndex = newIndex;
+            currentBar = 1;
+            currentBeat = 1;
+            
+            // Reset next beat time to current time for immediate effect
+            nextBeatTime = audioContext.currentTime;
+            
+            updateArrangementDisplay();
+            updateStatus();
+        }
+
+        // Show tempo adjustment feedback
+        function showTempoFeedback(sectionName, newTempo, delta) {
+            const direction = delta > 0 ? '↑' : '↓';
+            const amount = Math.abs(delta);
+            
+            // Create temporary feedback element
+            const feedback = document.createElement('div');
+            feedback.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                z-index: 1000;
+                animation: fadeInOut 2s ease-in-out;
+            `;
+            feedback.textContent = `${sectionName}: ${newTempo} BPM ${direction}${amount}`;
+            
+            // Add fade animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeInOut {
+                    0% { opacity: 0; transform: translateY(-10px); }
+                    20% { opacity: 1; transform: translateY(0); }
+                    80% { opacity: 1; transform: translateY(0); }
+                    100% { opacity: 0; transform: translateY(-10px); }
+                }
+            `;
+            document.head.appendChild(style);
+            document.body.appendChild(feedback);
+            
+            setTimeout(() => {
+                document.body.removeChild(feedback);
+                document.head.removeChild(style);
+            }, 2000);
+        }
+
+        // Theme management
+        function setTheme(themeName) {
+            const validThemes = ['dark', 'light', 'contrast', 'stage'];
+            if (!validThemes.includes(themeName)) {
+                themeName = 'dark';
+            }
+            
+            // Remove existing theme classes
+            document.body.removeAttribute('data-theme');
+            
+            // Set new theme (dark is default, no data-theme needed)
+            if (themeName !== 'dark') {
+                document.body.setAttribute('data-theme', themeName);
+            }
+            
+            // Save theme preference
+            localStorage.setItem('timecraft_theme', themeName);
+            
+            // Update metronome for theme-specific styling
+            updateVisualMetronome();
+        }
+
+        // Add keyboard event listener
+        document.addEventListener('keydown', handleKeyboardShortcuts);
+
+        // PWA Service Worker Registration
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then((registration) => {
+                            console.log('Service Worker registered successfully:', registration.scope);
+                            
+                            // Check for updates
+                            registration.addEventListener('updatefound', () => {
+                                const newWorker = registration.installing;
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        // New version available
+                                        showUpdateNotification();
+                                    }
+                                });
+                            });
+                        })
+                        .catch((error) => {
+                            console.log('Service Worker registration failed:', error);
+                        });
+                });
+            }
+        }
+
+        // Show update notification
+        function showUpdateNotification() {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #4CAF50;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 10000;
+                font-weight: 600;
+                cursor: pointer;
+            `;
+            notification.innerHTML = `
+                🔄 New version available! 
+                <span style="text-decoration: underline;">Tap to update</span>
+            `;
+            
+            notification.onclick = () => {
+                window.location.reload();
+            };
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 10000);
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA install prompt available');
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallButton();
+        });
+
+        function showInstallButton() {
+            // Only show if not already installed
+            if (!window.matchMedia('(display-mode: standalone)').matches) {
+                const installButton = document.createElement('button');
+                installButton.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: #2196F3;
+                    color: white;
+                    border: none;
+                    border-radius: 50px;
+                    padding: 15px 20px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px rgba(33,150,243,0.4);
+                    z-index: 1000;
+                    animation: pulse 2s infinite;
+                `;
+                installButton.innerHTML = '📱 Install App';
+                
+                // Add pulse animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes pulse {
+                        0% { transform: scale(1); }
+                        50% { transform: scale(1.05); }
+                        100% { transform: scale(1); }
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                installButton.onclick = async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        console.log('Install prompt result:', outcome);
+                        deferredPrompt = null;
+                        installButton.remove();
+                        style.remove();
+                    }
+                };
+                
+                document.body.appendChild(installButton);
+                
+                // Auto-hide after 30 seconds
+                setTimeout(() => {
+                    if (installButton.parentNode) {
+                        installButton.remove();
+                        style.remove();
+                    }
+                }, 30000);
+            }
+        }
+
+        // Handle app installation
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('TimeCraft PWA was installed');
+            // Remove install button if present
+            const installButton = document.querySelector('button[onclick*="deferredPrompt"]');
+            if (installButton) {
+                installButton.remove();
+            }
+        });
+
+        // Register service worker
+        registerServiceWorker();
 
         // Initialize when page loads
         window.addEventListener('load', init);
