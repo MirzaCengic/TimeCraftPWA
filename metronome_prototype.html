@@ -607,17 +607,6 @@
         <div class="main-controls">
             <div class="panel section-builder-panel">
                 <h2>Section Builder</h2>
-                <div style="margin-bottom: 20px;">
-                    <h3 style="margin-bottom: 15px; font-size: 1.1rem; opacity: 0.9;">Quick Templates</h3>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
-                        <button onclick="quickSection('A', 120, 4, '4/4')" style="background: #9C27B0; font-size: 12px;">120 BPM 4/4</button>
-                        <button onclick="quickSection('B', 140, 4, '4/4')" style="background: #9C27B0; font-size: 12px;">140 Fast</button>
-                        <button onclick="quickSection('C', 90, 8, '4/4')" style="background: #9C27B0; font-size: 12px;">90 Ballad</button>
-                        <button onclick="quickSection('D', 160, 4, '4/4')" style="background: #9C27B0; font-size: 12px;">160 Rock</button>
-                        <button onclick="quickSection('V', 120, 8, '4/4')" style="background: #4CAF50; font-size: 12px;">Verse</button>
-                        <button onclick="quickSection('C', 130, 8, '4/4')" style="background: #FF9800; font-size: 12px;">Chorus</button>
-                    </div>
-                </div>
 
                 <div class="section-builder">
                     <div class="input-group">
@@ -2118,37 +2107,6 @@
 
             // Initialize visual metronome
             updateVisualMetronome();
-        }
-
-        // Quick section creation function
-        function quickSection(name, tempo, bars, timeSignature) {
-            // Check if section exists
-            if (sections[name] && !confirm(`Section "${name}" already exists. Replace it?`)) {
-                return;
-            }
-            
-            // Create section with smart defaults
-            sections[name] = {
-                tempo: tempo,
-                bars: bars,
-                timeSignature: timeSignature,
-                subdivision: 1, // Default to quarter notes
-                subdivisionVolume: 30,
-                sound: 'classic',
-                accentSectionStart: false,
-                swingFeel: false
-            };
-            
-            // Update displays
-            updateSectionDisplay();
-            updateAvailableSections();
-            autoSave();
-            
-            // Auto-add to arrangement if empty
-            if (arrangement.length === 0) {
-                arrangement.push(name);
-                updateArrangementDisplay();
-            }
         }
 
         // Toggle between setup and performance modes
