@@ -127,6 +127,37 @@
             margin-bottom: 20px;
             color: var(--text-primary);
             font-size: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapse-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            min-height: 32px;
+        }
+
+        .collapse-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .panel-content {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .panel.collapsed .panel-content {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
         }
 
         .section-builder {
@@ -605,9 +636,10 @@
         </div>
 
         <div class="main-controls">
-            <div class="panel section-builder-panel">
-                <h2>Section Builder</h2>
+            <div class="panel section-builder-panel" id="sectionBuilderPanel">
+                <h2>Section Builder <button class="collapse-btn" onclick="toggleSectionBuilder()">−</button></h2>
 
+                <div class="panel-content">
                 <div class="section-builder">
                     <div class="input-group">
                         <label>Name:</label>
@@ -682,10 +714,13 @@
                 <div class="section-list" id="sectionList">
                     <!-- Sections will be added here -->
                 </div>
+                </div>
             </div>
 
-            <div class="panel arrangement-builder-panel">
-                <h2>Arrangement Builder</h2>
+            <div class="panel arrangement-builder-panel" id="arrangementBuilderPanel">
+                <h2>Arrangement Builder <button class="collapse-btn" onclick="toggleArrangementBuilder()">−</button></h2>
+                
+                <div class="panel-content">
                 <p style="margin-bottom: 15px; opacity: 0.8;">Click sections to add to arrangement:</p>
                 
                 <div id="availableSections" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
@@ -714,6 +749,7 @@
                     <button onclick="exportArrangement()" style="background: #FF9800;">📤 Export</button>
                     <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importArrangement(event)">
                     <button onclick="document.getElementById('importFile').click()" style="background: #9C27B0;">📥 Import</button>
+                </div>
                 </div>
             </div>
         </div>
@@ -2107,6 +2143,34 @@
 
             // Initialize visual metronome
             updateVisualMetronome();
+        }
+
+        // Section Builder collapse/expand functionality
+        function toggleSectionBuilder() {
+            const panel = document.getElementById('sectionBuilderPanel');
+            const button = panel.querySelector('.collapse-btn');
+            
+            if (panel.classList.contains('collapsed')) {
+                panel.classList.remove('collapsed');
+                button.textContent = '−';
+            } else {
+                panel.classList.add('collapsed');
+                button.textContent = '+';
+            }
+        }
+
+        // Arrangement Builder collapse/expand functionality
+        function toggleArrangementBuilder() {
+            const panel = document.getElementById('arrangementBuilderPanel');
+            const button = panel.querySelector('.collapse-btn');
+            
+            if (panel.classList.contains('collapsed')) {
+                panel.classList.remove('collapsed');
+                button.textContent = '−';
+            } else {
+                panel.classList.add('collapsed');
+                button.textContent = '+';
+            }
         }
 
         // Toggle between setup and performance modes
